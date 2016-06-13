@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.support.v4.util.Pair;
 import android.util.DisplayMetrics;
 import android.view.View;
 import android.widget.MediaController;
@@ -21,9 +22,10 @@ public class PlayerActivity extends Activity implements MediaController.MediaPla
     private static DisplayMetrics dm;
     private PlayerService mPlayerService;
     private boolean isServiceBound = false;
+    public boolean mRebindingService = false;
 
-    private PlayerController mController;
     private boolean isPaused = false;
+    public static final String EXTRA_REBIND_PLAYER_SERVICE = "EXTRA_REBIND_PLAYER_SERVICE";
 
     private ServiceConnection mPlayerServiceConnection = new ServiceConnection() {
         @Override
@@ -31,8 +33,11 @@ public class PlayerActivity extends Activity implements MediaController.MediaPla
             PlayerService.PlayerBinder binder = (PlayerService.PlayerBinder) iBinder;
             mPlayerService = binder.getService();
 
-            PlayerService.startVideos(PlayerActivity.this);
-
+            if (mRebindingService) {
+                onRebindMusicService();
+            } else {
+                PlayerService.startVideos(PlayerActivity.this);
+            }
         }
 
         @Override
@@ -44,6 +49,13 @@ public class PlayerActivity extends Activity implements MediaController.MediaPla
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_player);
+
+        Bundle extras = getIntent().getExtras();
+
+        if (extras != null){
+            mRebindingService = extras.getBoolean(EXTRA_REBIND_PLAYER_SERVICE, false);
+
+        }
         mVideoView = (VideoView) findViewById(R.id.video_view);
         dm = new DisplayMetrics();
         this.getWindowManager().getDefaultDisplay().getMetrics(dm);
@@ -52,7 +64,6 @@ public class PlayerActivity extends Activity implements MediaController.MediaPla
         mVideoView.setMinimumHeight(height);
         mVideoView.setMinimumWidth(width);
 
-        setController();
     }
 
     @Override
@@ -73,7 +84,6 @@ public class PlayerActivity extends Activity implements MediaController.MediaPla
     protected void onStop() {
         // Unbind from the service
         doUnbindPlayerService();
-        mController.hide();
         super.onStop();
     }
 
@@ -81,7 +91,6 @@ public class PlayerActivity extends Activity implements MediaController.MediaPla
     protected void onResume(){
         super.onResume();
         if(isPaused){
-            setController();
             isPaused=false;
         }
     }
@@ -106,11 +115,28 @@ public class PlayerActivity extends Activity implements MediaController.MediaPla
         }
     }
 
-    private void setController(){
-        mController = new PlayerController(this);
-        mController.setMediaPlayer(this);
-        mController.setAnchorView(findViewById(R.id.video_view));
-        mController.setEnabled(true);
+    private void onRebindMusicService() {
+        if (isServiceBound && mPlayerService != null) {
+
+            // this check needs to be here to ensure the play/pause state is restored when you have
+            // the app waiting in recents/multitasking, and you use the service to toggle the play/pause state
+            // e.g. Start playing the video with the app open, then hit multitasking. While multitasking is still open,
+            // pull down the notification shade and pause the class. Now touch the app in multitasking, and resume it.
+            // The pause state should be showing in the app UI.
+            if (mPlayerService.isVideoPlaying()) {
+                onVideoPlay();
+            } else {
+                onVideoPause();
+            }
+        }
+    }
+
+    public void onVideoPlay(){
+        mVideoView.resume();
+    }
+
+    public void onVideoPause(){
+        mVideoView.pause();
     }
 
     @Override

@@ -29,6 +29,7 @@ public class PlayerService extends Service  {
     private PendingIntent mRegularUIPendingIntent;
 
     private static final int NOTIFY_ID=1;
+    public static final String EXTRA_IS_UI_PAUSED = "EXTRA_IS_UI_PAUSED";
 
     @Override
     public void onCreate() {
@@ -68,6 +69,10 @@ public class PlayerService extends Service  {
         mPlayer.pause();
     }
 
+    public boolean isVideoPlaying() {
+        return mPlayer.isPlaying();
+    }
+
     public void go(){
         mPlayer.start();
     }
@@ -78,11 +83,6 @@ public class PlayerService extends Service  {
         }
         else {
 
-            Intent notIntent = new Intent(this, PlayerActivity.class);
-            notIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            PendingIntent pendInt = PendingIntent.getActivity(this, 0,
-                    notIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-
             mNotificationManager = NotificationManagerCompat.from(this);
             mNotificationBuilder = new NotificationCompat.Builder(this)
                     .setOngoing(true)
@@ -90,7 +90,7 @@ public class PlayerService extends Service  {
                     .setSmallIcon(android.R.drawable.ic_media_play)
                     .setColor(getResources().getColor(R.color.colorPrimary))
                     .setContentTitle("MP4 Player")
-                    .setContentIntent(pendInt);
+                    .setContentIntent(getRegularUIPendingIntent());
 //                    .addAction(R.drawable.pause, getString(R.string.notification_pause_action), getPausePendingIntent())
 //                    .setContentTitle(mCurrentMovement.getMovementType())
 //                    .setContentText(getString(R.string.songbyartist, currentSong.getTitle(), currentSong.getArtist()))
@@ -98,6 +98,16 @@ public class PlayerService extends Service  {
             mNotificationManager.notify(NOTIFY_ID, mNotificationBuilder.build());
         }
         return  mNotificationBuilder;
+    }
+
+    private PendingIntent getRegularUIPendingIntent(){
+        Intent videoIntent = new Intent(getApplicationContext(), PlayerActivity.class);
+        videoIntent.putExtra(EXTRA_IS_UI_PAUSED,false);
+        videoIntent.putExtra(PlayerActivity.EXTRA_REBIND_PLAYER_SERVICE, true);
+        videoIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+        mRegularUIPendingIntent = PendingIntent.getActivity(getApplicationContext(), 0, videoIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        return mRegularUIPendingIntent;
     }
 
     public class PlayerBinder extends Binder {
