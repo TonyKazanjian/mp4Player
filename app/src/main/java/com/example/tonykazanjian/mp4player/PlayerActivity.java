@@ -8,18 +8,21 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.DisplayMetrics;
+import android.view.View;
 import android.widget.MediaController;
 import android.widget.VideoView;
 
 /**
  * Created by tonykazanjian on 6/10/16.
  */
-public class PlayerActivity extends Activity {
+public class PlayerActivity extends Activity implements MediaController.MediaPlayerControl {
 
     public static VideoView mVideoView;
     private static DisplayMetrics dm;
     private PlayerService mPlayerService;
     private boolean isServiceBound = false;
+
+    private PlayerController mController;
 
     private ServiceConnection mPlayerServiceConnection = new ServiceConnection() {
         @Override
@@ -41,12 +44,14 @@ public class PlayerActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_player);
         mVideoView = (VideoView) findViewById(R.id.video_view);
-//        dm = new DisplayMetrics();
-//        this.getWindowManager().getDefaultDisplay().getMetrics(dm);
-//        int height = dm.heightPixels;
-//        int width = dm.widthPixels;
-//        mVideoView.setMinimumHeight(height);
-//        mVideoView.setMinimumWidth(width);
+        dm = new DisplayMetrics();
+        this.getWindowManager().getDefaultDisplay().getMetrics(dm);
+        int height = dm.heightPixels;
+        int width = dm.widthPixels;
+        mVideoView.setMinimumHeight(height);
+        mVideoView.setMinimumWidth(width);
+
+        setController();
     }
 
     @Override
@@ -71,9 +76,7 @@ public class PlayerActivity extends Activity {
         }
     }
 
-    public static void initializeMedia(MediaController mediaController){
-        PlayerActivity.mVideoView.setMediaController(mediaController);
-        mediaController.setAnchorView(PlayerActivity.mVideoView);
+    public static void initializeMedia(){
         PlayerActivity.mVideoView.setVideoPath("http://www.ebookfrenzy.com/android_book/movie.mp4");
         PlayerActivity.mVideoView.start();
     }
@@ -84,5 +87,67 @@ public class PlayerActivity extends Activity {
             unbindService(mPlayerServiceConnection);
             mPlayerService = null;
         }
+    }
+
+    private void setController(){
+        mController = new PlayerController(this);
+        mController.setMediaPlayer(this);
+        mController.setAnchorView(findViewById(R.id.video_view));
+        mController.setEnabled(true);
+    }
+
+    @Override
+    public void start() {
+
+    }
+
+    @Override
+    public void pause() {
+
+    }
+
+    @Override
+    public int getDuration() {
+        return 0;
+    }
+
+    @Override
+    public int getCurrentPosition() {
+        return 0;
+    }
+
+    @Override
+    public void seekTo(int i) {
+
+    }
+
+    @Override
+    public boolean isPlaying() {
+        return false;
+    }
+
+    @Override
+    public int getBufferPercentage() {
+        return 0;
+    }
+
+    @Override
+    public boolean canPause() {
+        return false;
+    }
+
+    @Override
+    public boolean canSeekBackward() {
+        return false;
+    }
+
+    @Override
+    public boolean canSeekForward() {
+        return false;
+    }
+
+    @Override
+    public int getAudioSessionId() {
+        return 0;
     }
 }
