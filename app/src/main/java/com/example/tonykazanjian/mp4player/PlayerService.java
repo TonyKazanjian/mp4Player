@@ -1,5 +1,7 @@
 package com.example.tonykazanjian.mp4player;
 
+import android.app.Notification;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -8,22 +10,31 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.support.annotation.Nullable;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
 import android.widget.MediaController;
 
 /**
  * Created by tonykazanjian on 6/10/16.
  */
-public class PlayerService extends Service  implements MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener,
-MediaPlayer.OnCompletionListener{
+public class PlayerService extends Service  {
 
     private final IBinder mPlayerBinder = new PlayerBinder();
     private MediaPlayer mPlayer;
+
+    private NotificationCompat.Builder mNotificationBuilder;
+    private NotificationManagerCompat mNotificationManager;
+    private PendingIntent mPausePendingIntent;
+    private PendingIntent mPlayPendingIntent;
+    private PendingIntent mRegularUIPendingIntent;
+
+    private static final int NOTIFY_ID=1;
 
     @Override
     public void onCreate() {
         super.onCreate();
         mPlayer = new MediaPlayer();
-        initMediaPlayer();
+//        initMediaPlayer();
     }
 
     @Override
@@ -31,7 +42,14 @@ MediaPlayer.OnCompletionListener{
 
         PlayerActivity.initializeMedia();
 
+        startForeground(NOTIFY_ID, getNotificationBuilder().build());
+
         return START_STICKY;
+    }
+
+    @Override
+    public void onDestroy(){
+        stopForeground(true);
     }
 
     @Nullable
@@ -46,28 +64,40 @@ MediaPlayer.OnCompletionListener{
         return intent;
     }
 
-    public void initMediaPlayer(){
-        mPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
-        //set stream type??
-        mPlayer.setOnPreparedListener(this);
-        mPlayer.setOnCompletionListener(this);
-        mPlayer.setOnErrorListener(this);
+    public void pausePlayer(){
+        mPlayer.pause();
     }
 
-    @Override
-    public void onCompletion(MediaPlayer mediaPlayer) {
-
-    }
-
-    @Override
-    public boolean onError(MediaPlayer mediaPlayer, int i, int i1) {
-        return false;
-    }
-
-    @Override
-    public void onPrepared(MediaPlayer mediaPlayer) {
+    public void go(){
         mPlayer.start();
+    }
 
+    private NotificationCompat.Builder getNotificationBuilder() {
+        if(mNotificationBuilder != null) {
+            return mNotificationBuilder;
+        }
+        else {
+
+            Intent notIntent = new Intent(this, PlayerActivity.class);
+            notIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            PendingIntent pendInt = PendingIntent.getActivity(this, 0,
+                    notIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+            mNotificationManager = NotificationManagerCompat.from(this);
+            mNotificationBuilder = new NotificationCompat.Builder(this)
+                    .setOngoing(true)
+                    .setShowWhen(false)
+                    .setSmallIcon(android.R.drawable.ic_media_play)
+                    .setColor(getResources().getColor(R.color.colorPrimary))
+                    .setContentTitle("MP4 Player")
+                    .setContentIntent(pendInt);
+//                    .addAction(R.drawable.pause, getString(R.string.notification_pause_action), getPausePendingIntent())
+//                    .setContentTitle(mCurrentMovement.getMovementType())
+//                    .setContentText(getString(R.string.songbyartist, currentSong.getTitle(), currentSong.getArtist()))
+//                    .setContentIntent(getRegularUIPendingIntent());
+            mNotificationManager.notify(NOTIFY_ID, mNotificationBuilder.build());
+        }
+        return  mNotificationBuilder;
     }
 
     public class PlayerBinder extends Binder {

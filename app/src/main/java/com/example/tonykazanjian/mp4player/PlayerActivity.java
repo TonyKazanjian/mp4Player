@@ -23,6 +23,7 @@ public class PlayerActivity extends Activity implements MediaController.MediaPla
     private boolean isServiceBound = false;
 
     private PlayerController mController;
+    private boolean isPaused = false;
 
     private ServiceConnection mPlayerServiceConnection = new ServiceConnection() {
         @Override
@@ -63,10 +64,26 @@ public class PlayerActivity extends Activity implements MediaController.MediaPla
     }
 
     @Override
+    protected void onPause(){
+        super.onPause();
+        isPaused=true;
+    }
+
+    @Override
     protected void onStop() {
         // Unbind from the service
         doUnbindPlayerService();
+        mController.hide();
         super.onStop();
+    }
+
+    @Override
+    protected void onResume(){
+        super.onResume();
+        if(isPaused){
+            setController();
+            isPaused=false;
+        }
     }
 
     private void doBindPlayerService() {
@@ -98,12 +115,12 @@ public class PlayerActivity extends Activity implements MediaController.MediaPla
 
     @Override
     public void start() {
-
+        mPlayerService.go();
     }
 
     @Override
     public void pause() {
-
+        mPlayerService.pausePlayer();
     }
 
     @Override
@@ -133,7 +150,7 @@ public class PlayerActivity extends Activity implements MediaController.MediaPla
 
     @Override
     public boolean canPause() {
-        return false;
+        return true;
     }
 
     @Override
