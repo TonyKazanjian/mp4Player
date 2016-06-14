@@ -170,7 +170,7 @@ public class PlayerService extends Service  {
         if(mPlayPendingIntent != null) return mPlayPendingIntent;
         else {
             Intent playIntent = new Intent(getApplicationContext(), PlayerService.class);
-            playIntent.setAction(ACTION_START_VIDEO);
+            playIntent.setAction(ACTION_PLAY);
 
             mPlayPendingIntent = PendingIntent.getService(
                     getApplicationContext(),

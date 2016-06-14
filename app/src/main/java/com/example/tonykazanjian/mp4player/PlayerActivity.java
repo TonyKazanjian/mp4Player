@@ -139,7 +139,7 @@ public class PlayerActivity extends Activity implements MediaController.MediaPla
     }
 
     public void onVideoPlay(){
-        mVideoView.resume();
+        mVideoView.start();
     }
 
     public void onVideoPause(){
