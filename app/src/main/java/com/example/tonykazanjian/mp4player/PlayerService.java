@@ -48,6 +48,8 @@ public class PlayerService extends Service  {
 
         if (intent != null && intent.getAction().equals(ACTION_START_VIDEO)) {
             sendPlayBroadcastMessage();
+            startForeground(NOTIFY_ID, getNotificationBuilder().build());
+
         }
 
         else if (intent != null && intent.getAction().equals(ACTION_PAUSE)) {
@@ -57,8 +59,6 @@ public class PlayerService extends Service  {
         else if (intent != null && intent.getAction().equals(ACTION_PLAY)) {
             sendNotificationPlayBroadcast();
         }
-
-        startForeground(NOTIFY_ID, getNotificationBuilder().build());
 
         return START_STICKY;
     }
@@ -199,7 +199,7 @@ public class PlayerService extends Service  {
     }
 
     private void sendPlayBroadcastMessage(){
-        updateNotificationAction(false);
+        updateNotificationAction(true);
         LocalBroadcastManager.getInstance(this).sendBroadcast(
                 getStandardPlayerBroadcast(PLAYER_START_MSG)
         );
