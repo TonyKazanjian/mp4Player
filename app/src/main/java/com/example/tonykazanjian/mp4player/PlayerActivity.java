@@ -71,7 +71,11 @@ public class PlayerActivity extends Activity implements MediaController.MediaPla
             mVideoView.setVideoPath(mVideoUrl);
             mVideoView.start();
         }
-
+        else if (extras != null && extras.getBoolean(PlayerService.EXTRA_IS_UI_PAUSED, true)){
+            mVideoUrl = extras.getString(PlayerService.EXTRA_VIDEO_URL);
+            mRebindingService = extras.getBoolean(EXTRA_REBIND_PLAYER_SERVICE, false);
+            onVideoPause();
+        }
     }
 
     @Override

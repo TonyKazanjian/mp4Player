@@ -25,6 +25,7 @@ public class PlayerService extends Service  {
     private PendingIntent mPausePendingIntent;
     private PendingIntent mPlayPendingIntent;
     private PendingIntent mRegularUIPendingIntent;
+    private PendingIntent mUIPausePendingIntent;
 
     private static final int NOTIFY_ID=1;
     public static final String EXTRA_VIDEO_URL = "EXTRA_VIDEO_URL";
@@ -134,7 +135,7 @@ public class PlayerService extends Service  {
             action.actionIntent = getPlayPendingIntent();
             action.icon = android.R.drawable.ic_media_play;
             action.title = "Play";
-            builder.setContentIntent(getRegularUIPendingIntent());
+            builder.setContentIntent(getUIPausedPendingIntent());
             mNotificationManager.notify(NOTIFY_ID, builder.build());
         }
         else {
@@ -153,9 +154,17 @@ public class PlayerService extends Service  {
         return mRegularUIPendingIntent;
     }
 
-//    private PendingIntent getUIPausedPendingIntent(){
-//
-//    }
+    private PendingIntent getUIPausedPendingIntent(){
+        Intent videoIntent = new Intent(getApplicationContext(), PlayerActivity.class);
+        videoIntent.putExtra(EXTRA_IS_UI_PAUSED, true);
+        videoIntent.putExtra(EXTRA_VIDEO_URL, Constants.VIDEO_URL);
+        videoIntent.putExtra(PlayerActivity.EXTRA_REBIND_PLAYER_SERVICE, true);
+
+        videoIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+        mUIPausePendingIntent = PendingIntent.getActivity(getApplicationContext(), 0, videoIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        return mUIPausePendingIntent;
+    }
 
     private PendingIntent getPausePendingIntent() {
         if(mPausePendingIntent != null) return mPausePendingIntent;
