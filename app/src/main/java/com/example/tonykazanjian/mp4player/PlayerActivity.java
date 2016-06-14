@@ -27,7 +27,7 @@ public class PlayerActivity extends Activity implements MediaController.MediaPla
     private boolean isServiceBound = false;
     public boolean mRebindingService = false;
 
-    public String mVideoString = "http://www.ebookfrenzy.com/android_book/movie.mp4";
+    public String mVideoUrl;
 
     private boolean isPaused = false;
     public static final String EXTRA_REBIND_PLAYER_SERVICE = "EXTRA_REBIND_PLAYER_SERVICE";
@@ -41,7 +41,7 @@ public class PlayerActivity extends Activity implements MediaController.MediaPla
             if (mRebindingService) {
                 onRebindMusicService();
             } else {
-                PlayerService.startVideos(PlayerActivity.this);
+                PlayerService.startVideos(PlayerActivity.this, Constants.VIDEO_URL);
             }
         }
 
@@ -55,12 +55,6 @@ public class PlayerActivity extends Activity implements MediaController.MediaPla
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_player);
 
-        Bundle extras = getIntent().getExtras();
-
-        if (extras != null){
-            mRebindingService = extras.getBoolean(EXTRA_REBIND_PLAYER_SERVICE, false);
-
-        }
         mVideoView = (VideoView) findViewById(R.id.video_view);
         dm = new DisplayMetrics();
         this.getWindowManager().getDefaultDisplay().getMetrics(dm);
@@ -68,6 +62,15 @@ public class PlayerActivity extends Activity implements MediaController.MediaPla
         int width = dm.widthPixels;
         mVideoView.setMinimumHeight(height);
         mVideoView.setMinimumWidth(width);
+
+        Bundle extras = getIntent().getExtras();
+
+        if (extras!= null && extras.getBoolean(PlayerService.EXTRA_IS_UI_PAUSED, false)){
+            mVideoUrl = extras.getString(PlayerService.EXTRA_VIDEO_URL);
+            mRebindingService = extras.getBoolean(EXTRA_REBIND_PLAYER_SERVICE, false);
+            mVideoView.setVideoPath(mVideoUrl);
+            mVideoView.start();
+        }
 
     }
 
@@ -109,8 +112,8 @@ public class PlayerActivity extends Activity implements MediaController.MediaPla
         }
     }
 
-    public void initializeMedia(){
-        mVideoView.setVideoPath(mVideoString);
+    private void initializeMedia(){
+        mVideoView.setVideoPath(Constants.VIDEO_URL);
         mVideoView.start();
     }
 
@@ -138,11 +141,11 @@ public class PlayerActivity extends Activity implements MediaController.MediaPla
         }
     }
 
-    public void onVideoPlay(){
+    private void onVideoPlay(){
         mVideoView.start();
     }
 
-    public void onVideoPause(){
+    private void onVideoPause(){
         mVideoView.pause();
     }
 

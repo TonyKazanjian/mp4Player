@@ -27,6 +27,7 @@ public class PlayerService extends Service  {
     private PendingIntent mRegularUIPendingIntent;
 
     private static final int NOTIFY_ID=1;
+    public static final String EXTRA_VIDEO_URL = "EXTRA_VIDEO_URL";
     public static final String PLAYER_START_MSG = "PLAYER_START";
     public static final String ACTION_START_VIDEO = "com.example.tonykazanjian.mp4player.action.ACTION_START_SONG";
     public static final String ACTION_PLAY = "com.example.tonykazanjian.mp4player.action.ACTION_PLAY";
@@ -47,6 +48,7 @@ public class PlayerService extends Service  {
     public int onStartCommand(Intent intent, int flags, int startId) {
 
         if (intent != null && intent.getAction().equals(ACTION_START_VIDEO)) {
+
             sendPlayBroadcastMessage();
             startForeground(NOTIFY_ID, getNotificationBuilder().build());
 
@@ -74,9 +76,10 @@ public class PlayerService extends Service  {
         return mPlayerBinder;
     }
 
-    public static Intent startVideos (Context context) {
+    public static Intent startVideos (Context context, String videoUrl) {
         Intent intent = new Intent(context, PlayerService.class);
         intent.setAction(ACTION_START_VIDEO);
+        intent.putExtra(EXTRA_VIDEO_URL, videoUrl);
         context.startService(intent);
         return intent;
     }
@@ -142,12 +145,17 @@ public class PlayerService extends Service  {
     private PendingIntent getRegularUIPendingIntent(){
         Intent videoIntent = new Intent(getApplicationContext(), PlayerActivity.class);
         videoIntent.putExtra(EXTRA_IS_UI_PAUSED,false);
+        videoIntent.putExtra(EXTRA_VIDEO_URL, Constants.VIDEO_URL);
         videoIntent.putExtra(PlayerActivity.EXTRA_REBIND_PLAYER_SERVICE, true);
         videoIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
         mRegularUIPendingIntent = PendingIntent.getActivity(getApplicationContext(), 0, videoIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         return mRegularUIPendingIntent;
     }
+
+//    private PendingIntent getUIPausedPendingIntent(){
+//
+//    }
 
     private PendingIntent getPausePendingIntent() {
         if(mPausePendingIntent != null) return mPausePendingIntent;
