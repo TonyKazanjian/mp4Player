@@ -1,12 +1,15 @@
 package com.example.tonykazanjian.mp4player;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.util.Pair;
 import android.util.DisplayMetrics;
 import android.view.View;
@@ -18,11 +21,13 @@ import android.widget.VideoView;
  */
 public class PlayerActivity extends Activity implements MediaController.MediaPlayerControl {
 
-    public static VideoView mVideoView;
+    public VideoView mVideoView;
     private static DisplayMetrics dm;
     private PlayerService mPlayerService;
     private boolean isServiceBound = false;
     public boolean mRebindingService = false;
+
+    public String mVideoString = "http://www.ebookfrenzy.com/android_book/movie.mp4";
 
     private boolean isPaused = false;
     public static final String EXTRA_REBIND_PLAYER_SERVICE = "EXTRA_REBIND_PLAYER_SERVICE";
@@ -69,7 +74,6 @@ public class PlayerActivity extends Activity implements MediaController.MediaPla
     @Override
     protected void onStart() {
         super.onStart();
-
         doBindPlayerService();
 
     }
@@ -84,6 +88,7 @@ public class PlayerActivity extends Activity implements MediaController.MediaPla
     protected void onStop() {
         // Unbind from the service
         doUnbindPlayerService();
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mVideoReceiver);
         super.onStop();
     }
 
@@ -93,6 +98,8 @@ public class PlayerActivity extends Activity implements MediaController.MediaPla
         if(isPaused){
             isPaused=false;
         }
+
+        LocalBroadcastManager.getInstance(this).registerReceiver(mVideoReceiver, new IntentFilter(PlayerService.PLAYER_BROADCAST_EVENT));
     }
 
     private void doBindPlayerService() {
@@ -102,9 +109,9 @@ public class PlayerActivity extends Activity implements MediaController.MediaPla
         }
     }
 
-    public static void initializeMedia(){
-        PlayerActivity.mVideoView.setVideoPath("http://www.ebookfrenzy.com/android_book/movie.mp4");
-        PlayerActivity.mVideoView.start();
+    public void initializeMedia(){
+        mVideoView.setVideoPath(mVideoString);
+        mVideoView.start();
     }
 
     private void doUnbindPlayerService() {
@@ -193,4 +200,25 @@ public class PlayerActivity extends Activity implements MediaController.MediaPla
     public int getAudioSessionId() {
         return 0;
     }
+
+    /***** BROADCAST RECEIVERS *****/
+
+    private BroadcastReceiver mVideoReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String message = intent.getStringExtra(PlayerService.EXTRA_PLAYER_BROADCAST_MSG);
+
+            switch (message) {
+                case PlayerService.PLAYER_START_MSG:
+                    initializeMedia();
+                    break;
+                case PlayerService.PLAYER_NOTIFICATION_PAUSE_MSG:
+                    onVideoPause();
+                    break;
+                case PlayerService.PLAYER_NOTIFICATION_PLAY_MSG:
+                    onVideoPlay();
+                    break;
+            }
+        }
+    };
 }

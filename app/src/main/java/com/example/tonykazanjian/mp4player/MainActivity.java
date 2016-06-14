@@ -18,7 +18,9 @@ public class MainActivity extends AppCompatActivity {
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                startActivity(new Intent(MainActivity.this, PlayerActivity.class));
+                Intent intent = new Intent(MainActivity.this, PlayerActivity.class);
+                intent.setAction(PlayerService.ACTION_START_VIDEO);
+                startActivity(intent);
             }
         });
     }
